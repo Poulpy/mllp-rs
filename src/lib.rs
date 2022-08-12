@@ -1,3 +1,5 @@
+//! Simple MLLP implementation
+//!
 //! "The goal of the MLLP Message Transport protocol is to provide an interface between HL7
 //! Applications and the transport protocol that uses minimal overhead." (from *HL7 Version 3 Standard:
 //! Transport Specification - MLLP, Release 2*).
@@ -14,6 +16,8 @@
 //! where:
 //! - ACK is the acknowledgement character, 0x06.
 //! - NAK is the negative-acknowledgement character, 0x15.
+//!
+//! # Quick start
 //!
 //! Client side code might look like this:
 //! ```
