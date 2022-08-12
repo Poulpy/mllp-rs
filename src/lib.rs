@@ -27,7 +27,7 @@
 //!
 //! // Client side
 //! let mut stream = TcpStream::connect("127.0.0.1:5000")?;
-//! let _ = stream.write(MllpCodec::encode("MSH|^~\&|WIR|||36|20200514123930||VXU^V04^VXU_V04|43|P|2.5.1|||ER").as_bytes());
+//! let _ = stream.write(MllpCodec::encode("MSH|^~\&|WIR|||36|20200514123930||VXU^V04^VXU_V04|43|P|2.5.1|||ER".as_bytes()).as_bytes());
 //! ```
 //!
 //! Server side code might look like this:
@@ -44,28 +44,41 @@
 //! }
 //! ```
 
+extern crate core;
 
 use std::fmt;
-const SB: char = 11u8 as char;
-const EB: char = 28u8 as char;
-const CR: char = 13u8 as char;
-const ACK: char = 6u8 as char;
-const NAK: char = 15u8 as char;
+
+/// Start Block
+const SB: u8 = 11u8;
+/// End Block
+const EB: u8 = 28u8;
+/// Carriage Return
+const CR: u8 = 13u8;
+const ACK: u8 = 6u8;
+/// Negative ACK
+const NAK: u8 = 15u8;
 
 pub struct MllpCodec { }
 
 impl MllpCodec {
-    pub fn encode(with: &str) -> String {
-        format!("{}{}{}{}", SB, with, EB, CR)
+    pub fn encode(with: &[u8]) -> Vec<u8> {
+        let mut buf: Vec<u8> = vec![];
+
+        buf.push(SB);
+        buf.extend(with.iter());
+        buf.push(EB);
+        buf.push(CR);
+
+        buf
     }
 
     pub fn decode(with: &[u8]) -> Result<&[u8], MllpSyntaxError> {
         assert!(with.len() >= 4);
 
-        let sb = with[0] as char;
+        let sb = with[0];
         let hl7 = &with[1..with.len() - 2];
-        let eb = with[with.len() - 2] as char;
-        let cr = with[with.len() - 1] as char;
+        let eb = with[with.len() - 2];
+        let cr = with[with.len() - 1];
 
         if sb == SB && eb == EB && cr == CR {
             Ok(hl7)
@@ -80,8 +93,8 @@ impl MllpCodec {
     ///
     /// let ack = MllpCodec::ack();
     /// ```
-    pub fn ack() -> String {
-        format!("{}{}{}{}", SB, ACK, EB, CR)
+    pub fn ack() -> [u8;4] {
+        [SB, ACK, EB, CR]
     }
 
     /// Creates an MLLP NAK (Negative ACK).
@@ -90,16 +103,16 @@ impl MllpCodec {
     ///
     /// let nak = MllpCodec::nak();
     /// ```
-    pub fn nak() -> String {
-        format!("{}{}{}{}", SB, NAK, EB, CR)
+    pub fn nak() -> [u8;4] {
+        [SB, NAK, EB, CR]
     }
 
     pub fn is_ack(with: &[u8]) -> bool {
-        with == Self::ack().as_bytes()
+        with == Self::ack()
     }
 
     pub fn is_nak(with: &[u8]) -> bool {
-        with == Self::nak().as_bytes()
+        with == Self::nak()
     }
 }
 
@@ -126,8 +139,8 @@ mod tests {
     #[test]
     fn encode_and_decode_same_message() {
         let data = "MSH|^~\\&|ZIS|1^AHospital|||200405141144||¶ADT^A01|20041104082400|P|2.3|||AL|NE|||8859/15|¶EVN|A01|20041104082400.0000+0100|20041104082400¶PID||\"\"|10||Vries^Danny^D.^^de||19951202|M|||Rembrandlaan^7^Leiden^^7301TH^\"\"^^P||\"\"|\"\"||\"\"|||||||\"\"|\"\"¶PV1||I|3w^301^\"\"^01|S|||100^van den Berg^^A.S.^^\"\"^dr|\"\"||9||||H||||20041104082400.0000+0100";
-        let encoded_data = MllpCodec::encode(data);
-        let decoded_data = MllpCodec::decode(encoded_data.as_bytes());
+        let encoded_data = MllpCodec::encode(data.as_bytes());
+        let decoded_data = MllpCodec::decode(encoded_data.as_slice());
 
         assert!(decoded_data.is_ok());
         assert_eq!(decoded_data.unwrap(), data.as_bytes());
@@ -161,7 +174,7 @@ mod tests {
                 if received {
                     let socket_addr = SocketAddr::from(([127, 0, 0, 1], 5000));
                     let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(3)).unwrap();
-                    let _ = stream.write(MllpCodec::encode(original_data).as_bytes());
+                    let _ = stream.write(MllpCodec::encode(original_data.as_bytes()).as_slice());
                 }
             }
 
@@ -174,12 +187,12 @@ mod tests {
     #[test]
     fn it_creates_ack() {
         let ack = MllpCodec::ack();
-        assert!(MllpCodec::is_ack(ack.as_bytes()));
+        assert!(MllpCodec::is_ack(&ack));
     }
 
     #[test]
     fn it_creates_nak() {
         let nak = MllpCodec::nak();
-        assert!(MllpCodec::is_nak(nak.as_bytes()));
+        assert!(MllpCodec::is_nak(&nak));
     }
 }
