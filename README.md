@@ -7,7 +7,7 @@ MLLP NAK.
 
 ## Install
 
-Put this in your Cargo.toml under `[dependecies]`:
+Put this in your Cargo.toml under `[dependencies]`:
 ```toml
 mllp-rs = "0.1.0"
 ```
