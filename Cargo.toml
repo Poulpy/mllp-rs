@@ -1,0 +1,14 @@
+[package]
+name = "mllp-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Poulpy"]
+description = "Simple MLLP (Minimal Lower Layer Protocol) implementation."
+license = "MIT"
+repository = "https://github.com/Poulpy/mllp-rs"
+keywords = ["mllp", "hl7", "protocol", "network"]
+categories = ["encoding"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
